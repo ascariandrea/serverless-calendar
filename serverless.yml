@@ -1,0 +1,99 @@
+configValidationMode: warn
+
+service: 
+  name: calendar
+
+frameworkVersion: "2"
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+  dynamodb: 
+    stages:
+      - local
+    start: 
+      port: 8008
+      inMemory: true
+      migrate: true
+    migrations: 
+      dir: "offline/migrations"
+  jest:
+    collectCoverage: true
+
+plugins: 
+  - serverless-webpack
+  - serverless-dynamodb-local
+  - serverless-offline
+  - serverless-jest-plugin
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'local'} # Set the default stage used. Default is dev
+  region: ${opt:region, 'eu-central-1'} # Overwrite the default region used. Default is us-east-1
+  runtime: nodejs12.x
+  apiGateway: 
+    minimumCompressionSize: 1024
+  environment: 
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+functions: 
+  list: 
+    handler: "src/events/list.list"
+    events: 
+      - http: 
+          method: "get"
+          path: "events"
+      
+  get:
+    handler: "src/events/get.get"
+    events: 
+      - http:
+          method: "get"
+          path: "events/{id}"
+  create: 
+    handler: "src/events/create.create"
+    events:
+      - http:
+          method: "post"
+          path: "events"
+  edit: 
+    handler: "src/events/edit.edit"
+    events:
+      - http:
+          method: "put"
+          path: "events/{id}"
+  remove: 
+    handler: "src/events/remove.remove"
+    events: 
+      - http:
+          method: "delete"
+          path: "events/{id}"
+
+resources: 
+  Resources:
+    CalendarDynamoDBTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: "Retain"
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+  

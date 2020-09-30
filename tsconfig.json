@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "lib": ["es2017"],
+    "removeComments": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "sourceMap": true,
+    "target": "es2017",
+    "outDir": "lib",
+    "strict": true,
+    "strictNullChecks": true
+  },
+  "include": ["./**/*.ts", "typings/globals.d.ts"],
+  "exclude": [
+    "node_modules/**/*",
+    ".serverless/**/*",
+    ".webpack/**/*",
+    "_warmup/**/*",
+    ".vscode/**/*"
+  ],
+  "typedocOptions": {
+    "mode": "modules",
+    "out": "docs",
+    "ignoreCompilerErrors": true,
+    "includes": ["./src"],
+    "theme": "minimal"
+  }
+}
